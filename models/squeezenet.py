@@ -42,6 +42,7 @@ def inference(images, keep_probability=1.0, training=True, weight_decay=0.0, reu
         # Moving averages ends up in the trainable variables collection
         'variables_collections': [ tf.GraphKeys.TRAINABLE_VARIABLES ],
     }
+    endpoints = {}
     with slim.arg_scope([slim.conv2d],
                         weights_initializer=slim.xavier_initializer_conv2d(uniform=True),
                         weights_regularizer=slim.l2_regularizer(weight_decay),
@@ -66,4 +67,4 @@ def inference(images, keep_probability=1.0, training=True, weight_decay=0.0, reu
                 net = slim.conv2d(net, 1000, [1, 1], activation_fn=None, normalizer_fn=None, scope='conv10')
                 net = slim.avg_pool2d(net, net.get_shape()[1:3], stride=1, scope='avgpool10')
                 logits = tf.squeeze(net, [1, 2], name='logits')
-    return logits
+    return logits, endpoints

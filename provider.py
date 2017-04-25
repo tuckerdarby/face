@@ -85,7 +85,6 @@ def build_batch(images, triplets, process=True):
     return batch
 
 
-
 def test_triplets(classes=3, size=5):
     embeddings = []
     for c in range(classes):
