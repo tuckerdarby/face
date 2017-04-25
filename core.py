@@ -16,7 +16,7 @@ def triplet_loss(anchor, positive, negative, alpha):
     return loss
 
 
-def face_trainer(model, learning_rate, image_shape, reuse=True):
+def face_trainer(model, learning_rate, image_shape, global_step, reuse=True):
     anchors = tf.placeholder(tf.float32, image_shape)
     positives = tf.placeholder(tf.float32, image_shape)
     negatives = tf.placeholder(tf.float32, image_shape)
@@ -27,7 +27,7 @@ def face_trainer(model, learning_rate, image_shape, reuse=True):
     negatives_, _ = model(negatives, reuse=reuse)
 
     loss = triplet_loss(anchors_, positives_, negatives_, alpha)
-    trainer = tf.train.AdamOptimizer(learning_rate).minimize(loss)
+    trainer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=global_step)
 
     points = {
         'anchors': anchors,
@@ -67,12 +67,17 @@ def face_train(model, run_name, max_iter=100, people=10, samples=30, alpha=1, le
         images = provider.sample_people(num_people=1, samples=1)
         image_shape = (None, images[0].shape[1], images[0].shape[2], images[0].shape[3])
 
+    global_step = tf.Variable(0, name='global_step', trainable=False)
+    lr = tf.train.exponential_decay(learning_rate, global_step, 1000, 0.96)
+
     inbound = tf.placeholder(tf.float32, image_shape)
     logits, _ = model(inbound)
-    trainer = face_trainer(model, learning_rate, image_shape)
+
+    trainer = face_trainer(model, lr, image_shape, global_step)
 
     saver = tf.train.Saver()
     restorer = tf.train.Saver()
+
 
     with tf.Session() as sess:
         tf.global_variables_initializer().run()
@@ -104,9 +109,9 @@ def face_train(model, run_name, max_iter=100, people=10, samples=30, alpha=1, le
             }
 
             _, loss = sess.run([trainer['train'], trainer['loss']], feed_dict=train_dict)
-            print iteration, loss
+            print iteration, loss, sess.run(global_step)
 
             if iteration % 25 == 0:
-                saver.save(sess, CHECKPOINT_LOC + run_name + '/train.ckpt')
+                saver.save(sess, CHECKPOINT_LOC + run_name + '/train.ckpt', global_step=global_step)
 
-        saver.save(sess,  CHECKPOINT_LOC + run_name + '/train.ckpt')
+        saver.save(sess,  CHECKPOINT_LOC + run_name + '/train.ckpt', global_step=global_step)
