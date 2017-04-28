@@ -102,7 +102,7 @@ def download_faces():
             if k >= max_people:
                 break
 
-        if i >= 300: break
+        if i >= 3000: break
 
 
 download_faces()

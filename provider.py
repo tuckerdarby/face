@@ -47,6 +47,7 @@ def select_triplets(embeddings):
     num_faces = embeddings.shape[1]
 
     triplets = []
+    vals = []
     for i in range(num_people):
         for a in range(num_faces-1):
             anchor = embeddings[i, a]
@@ -62,12 +63,16 @@ def select_triplets(embeddings):
                 dists = neg_dists - post_dist
                 dists = dists.flatten()
 
-                furthest = np.argmin(dists)
+                furthest = np.argsort(dists)[0]
+                dist = dists[furthest]
+                vals.append(dist)
                 neg_idx = furthest / num_faces
                 neg_pos = furthest % num_faces
                 triplet = [(i, a), (i, p), (neg_idx, neg_pos)]
                 triplets.append(triplet)
 
+    ranked = np.argsort(vals)
+    triplets = np.array(triplets)[ranked]
     return triplets
 
 
@@ -82,7 +87,14 @@ def build_batch(images, triplets, process=True):
         if process:
             batch[k] = processor.whiten(batch[k])
 
+    batch = np.array(batch)
     return batch
+
+
+def shuffle_batch(batch):
+    args = np.random.permutation(range(len(batch[0])))
+    shuffled = batch[:, args]
+    return shuffled
 
 
 def test_triplets(classes=3, size=5):

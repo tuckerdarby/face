@@ -16,15 +16,21 @@ def triplet_loss(anchor, positive, negative, alpha):
     return loss
 
 
+def embed(model, inputs, reuse, training=True):
+    embeddings, _ = model(inputs, reuse=reuse, training=training)
+    embeddings = tf.nn.l2_normalize(embeddings, 1, 1e-10, name='embeddings')
+    return embeddings
+
+
 def face_trainer(model, learning_rate, image_shape, global_step, reuse=True):
     anchors = tf.placeholder(tf.float32, image_shape)
     positives = tf.placeholder(tf.float32, image_shape)
     negatives = tf.placeholder(tf.float32, image_shape)
     alpha = tf.placeholder(tf.float32, None)
 
-    anchors_, _ = model(anchors, reuse=reuse)
-    positives_, _ = model(positives, reuse=reuse)
-    negatives_, _ = model(negatives, reuse=reuse)
+    anchors_= embed(model, anchors, reuse=reuse, training=True)
+    positives_ = embed(model, positives, reuse=reuse, training=True)
+    negatives_ = embed(model, negatives, reuse=reuse, training=True)
 
     loss = triplet_loss(anchors_, positives_, negatives_, alpha)
     trainer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=global_step)
@@ -41,34 +47,14 @@ def face_trainer(model, learning_rate, image_shape, global_step, reuse=True):
     return points
 
 
-def face_eval(model, run_name, images, image_shape):
-    inbound = tf.placeholder(tf.float32, image_shape)
-    logits, _ = model(inbound, training=False, reuse=True)
-    restorer = tf.train.Saver()
-    embeddings = []
-
-    with tf.Session() as sess:
-        tf.global_variables_initializer()
-        checkpoint =  tf.train.get_checkpoint_state(CHECKPOINT_LOC + run_name)
-        if checkpoint and checkpoint.model_checkpoint_path:
-            print 'restoring model'
-            restorer.restore(sess, checkpoint.model_checkpoint_path)
-        else:
-            print 'bad restore model'
-        for i in range(len(images)):
-            feed_dict = {inbound: images[i]}
-            embeddings.append(sess.run(logits, feed_dict))
-
-    return embeddings
-
-
-def face_train(model, run_name, max_iter=100, people=10, samples=30, alpha=1, learning_rate=0.001, image_shape=None):
+def face_train(model, run_name, max_iter=100, people=10, samples=30, batch_size=100,
+               alpha=0.25, learning_rate=0.001, image_shape=None):
     if image_shape is None:
         images = provider.sample_people(num_people=1, samples=1)
         image_shape = (None, images[0].shape[1], images[0].shape[2], images[0].shape[3])
 
     global_step = tf.Variable(0, name='global_step', trainable=False)
-    lr = tf.train.exponential_decay(learning_rate, global_step, 1000, 0.96)
+    lr = tf.train.exponential_decay(learning_rate, global_step, 300, 0.96)
 
     inbound = tf.placeholder(tf.float32, image_shape)
     logits, _ = model(inbound)
@@ -77,7 +63,6 @@ def face_train(model, run_name, max_iter=100, people=10, samples=30, alpha=1, le
 
     saver = tf.train.Saver()
     restorer = tf.train.Saver()
-
 
     with tf.Session() as sess:
         tf.global_variables_initializer().run()
@@ -101,6 +86,14 @@ def face_train(model, run_name, max_iter=100, people=10, samples=30, alpha=1, le
             embeddings = np.array(embeddings)
             triplet_idxs = provider.select_triplets(embeddings)
             triplets = provider.build_batch(images, triplet_idxs)
+
+            if batch_size > 0:
+                triplets = triplets[:,:(batch_size*2)]
+                triplets = provider.shuffle_batch(triplets)
+                triplets = triplets[:,:batch_size]
+            else:
+                triplets = provider.shuffle_batch(triplets)
+
             train_dict = {
                 trainer['anchors']: triplets[0],
                 trainer['positives']: triplets[1],
@@ -108,10 +101,31 @@ def face_train(model, run_name, max_iter=100, people=10, samples=30, alpha=1, le
                 trainer['alpha']: alpha
             }
 
-            _, loss = sess.run([trainer['train'], trainer['loss']], feed_dict=train_dict)
-            print iteration, loss, sess.run(global_step)
+            _, loss, step = sess.run([trainer['train'], trainer['loss'], global_step], feed_dict=train_dict)
+            print iteration, step, loss
 
-            if iteration % 25 == 0:
+            if iteration % 10 == 0:
                 saver.save(sess, CHECKPOINT_LOC + run_name + '/train.ckpt', global_step=global_step)
 
         saver.save(sess,  CHECKPOINT_LOC + run_name + '/train.ckpt', global_step=global_step)
+
+
+def face_eval(model, run_name, images, image_shape):
+    inbound = tf.placeholder(tf.float32, image_shape)
+    logits = embed(model, inbound, reuse=True, training=True)
+    restorer = tf.train.Saver()
+    embeddings = []
+
+    with tf.Session() as sess:
+        tf.global_variables_initializer()
+        checkpoint =  tf.train.get_checkpoint_state(CHECKPOINT_LOC + run_name)
+        if checkpoint and checkpoint.model_checkpoint_path:
+            print 'restoring model'
+            restorer.restore(sess, checkpoint.model_checkpoint_path)
+        else:
+            print 'bad restore model'
+        for i in range(len(images)):
+            feed_dict = {inbound: images[i]}
+            embeddings.append(sess.run(logits, feed_dict))
+
+    return embeddings

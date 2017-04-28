@@ -73,7 +73,7 @@ def extract_data(filename='cameron_brigh'):
     if not filename.endswith('.tfrecords'):
         filename += '.tfrecords'
     filename = RECORD_LOC + filename
-    print filename
+    # print filename
     record_iterator = tf.python_io.tf_record_iterator(filename)
     for string_record in record_iterator:
         example = tf.train.Example()
@@ -87,7 +87,6 @@ def extract_data(filename='cameron_brigh'):
         remade = np.array(inbound, dtype=np.float32)
         remade = remade.reshape((height, width, depth))
         inbounds.append(remade)
-
 
     # print 'Decoded Shape', (batch, height, width, depth)
     return np.array(inbounds)
