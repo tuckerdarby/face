@@ -35,7 +35,7 @@ def difference_map(embeddings):
     diff = np.array([[0 for _ in range(size)] for _ in range(size)])
     for i in range(size):
         for k in range(size):
-            t, ds, m = get_differences(embeddings[i][:5], embeddings[k][5:])
+            t, ds, m = get_differences(embeddings[i], embeddings[k])
             diff[i, k] = m * 100
     return diff
 
@@ -67,6 +67,8 @@ def test_model(model, name):
     guesses, correct, acc = ranked_differences(embeddings)
 
     print diffs
+    sns.heatmap(diffs)
+    sns.plt.show()
     print correct, acc
     # print_differences(embeddings)
 

@@ -16,8 +16,9 @@ def triplet_loss(anchor, positive, negative, alpha):
     return loss
 
 
-def embed(model, inputs, reuse, training=True):
-    embeddings, _ = model(inputs, reuse=reuse, training=training)
+def embed(model, inputs, reuse, training=True, dropout=0.0):
+    keep = 1 - dropout
+    embeddings, _ = model(inputs, reuse=reuse, training=training, keep_probability=keep)
     embeddings = tf.nn.l2_normalize(embeddings, 1, 1e-10, name='embeddings')
     return embeddings
 
@@ -48,7 +49,7 @@ def face_trainer(model, learning_rate, image_shape, global_step, reuse=True):
 
 
 def face_train(model, run_name, max_iter=100, people=10, samples=30, batch_size=100,
-               alpha=0.25, learning_rate=0.001, image_shape=None):
+               alpha=0.25, learning_rate=0.001, image_shape=None, dropout=0):
     if image_shape is None:
         images = provider.sample_people(num_people=1, samples=1)
         image_shape = (None, images[0].shape[1], images[0].shape[2], images[0].shape[3])
@@ -56,8 +57,10 @@ def face_train(model, run_name, max_iter=100, people=10, samples=30, batch_size=
     global_step = tf.Variable(0, name='global_step', trainable=False)
     lr = tf.train.exponential_decay(learning_rate, global_step, 300, 0.96)
 
+    reuse = os.path.exists(CHECKPOINT_LOC + run_name)
+
     inbound = tf.placeholder(tf.float32, image_shape)
-    logits, _ = model(inbound)
+    logits = embed(model, inbound, reuse)
 
     trainer = face_trainer(model, lr, image_shape, global_step)
 
