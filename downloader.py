@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-import urllib
+import urllib, urllib2
 import socket
 from PIL import Image
 from constants import *
@@ -26,6 +26,28 @@ def get_face(filename, url):
             return valid_image
         except Exception:
             print 'exception', filename, url
+    else:
+        print 'exists', filename
+        # valid_image = detect_bad_image(filename)
+
+    return False
+
+
+def get_face2(filename, url):
+    if not os.path.exists(filename):
+        try:
+            print url
+            response = urllib2.urlopen(url, timeout=2)
+            try:
+                with open(filename, 'wb') as f:
+                    f.write(response.read())
+                print 'downloaded', filename
+                valid_image = detect_bad_image(filename)
+                return valid_image
+            except Exception:
+                print 'bad write', filename, url
+        except Exception:
+            print 'ignoring', filename
     else:
         print 'exists', filename
         # valid_image = detect_bad_image(filename)
@@ -70,7 +92,7 @@ max_people = 100
 
 def download_faces():
     for i, fn in enumerate(filenames):
-        if i < 250:
+        if i < 300:
             continue
         name = str(fn[:len(fn)-5]).strip().lower()
         df = pd.read_csv(LINK_LOC + fn, header=None, delimiter="\s+")
@@ -94,7 +116,7 @@ def download_faces():
 
             filename = fn_dir + name + '_' + str(k) + ext
 
-            valid_image = get_face(filename, url)
+            valid_image = get_face2(filename, url)
 
             if valid_image:
                crop_face(filename, left, top, right, bottom)

@@ -89,16 +89,21 @@ def record(inbound, name):
     writer.close()
 
 
-def record_faces():
+def record_face(name, size, min_faces):
+    imgs = aid.read_and_resize_data(PEOPLE_LOC + name, size)
+    record(imgs, name)
+    return imgs
+
+
+def record_faces(min_faces=50):
     names = get_people_names()
     size = (32, 32)
-
     for name in names:
-        if os.path.exists(RECORD_LOC + name + '.tfrecords'):
+        if os.path.exists(RECORD_LOC + name + '.tfrecords') or len(aid.get_files(PEOPLE_LOC + name)[0]) < min_faces:
             continue
-        imgs = aid.read_and_resize_data(PEOPLE_LOC + name, size)
-        record(imgs, name)
-        print name, imgs.shape
+        imgs = record_face(name, size, min_faces)
+        if imgs is not None:
+            print name, imgs.shape
 
 
 record_faces()
