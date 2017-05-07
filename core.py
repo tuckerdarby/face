@@ -48,6 +48,15 @@ def face_trainer(model, learning_rate, image_shape, global_step, reuse=True):
     return points
 
 
+def embed_images(images, sess, inbound, logits):
+    embeddings = []
+    for i in range(len(images)):
+        feed_dict = {inbound: images[i]}
+        logits_ = sess.run(logits, feed_dict)
+        embeddings.append(logits_)
+
+    return np.array(embeddings)
+
 def face_train(model, run_name, max_iter=100, people=10, faces=30, batch_size=100,
                alpha=0.25, learning_rate=0.001, image_shape=None, dropout=0):
 
@@ -81,13 +90,7 @@ def face_train(model, run_name, max_iter=100, people=10, faces=30, batch_size=10
 
         for iteration in range(max_iter):
             images = provider.sample_people(num_people=people, num_faces=faces, process=True)
-            embeddings = []
-            for i in range(len(images)):
-                feed_dict = {inbound: images[i]}
-                logits_ = sess.run(logits, feed_dict)
-                embeddings.append(logits_)
-
-            embeddings = np.array(embeddings)
+            embeddings = embed_images(images, sess, inbound, logits)
             triplet_idxs = provider.select_triplets(embeddings, hard_mine=False)
             triplets = provider.build_batch(images, triplet_idxs)
             triplets = provider.shuffle_batch(triplets)
