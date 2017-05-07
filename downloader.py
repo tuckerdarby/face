@@ -125,7 +125,7 @@ def download_faces():
             if k >= max_people:
                 break
 
-        recorder.record_face(name, FACE_SIZE, min_faces=50)
+        recorder.record_person(name, FACE_SIZE, min_faces=50)
         if i >= 3000: break
 
 

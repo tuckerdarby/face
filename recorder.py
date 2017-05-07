@@ -87,25 +87,25 @@ def filter_images(images):
         if image.std() < 10 or image.mean() > 240 or image.mean() < 15:
             continue
         filtered.append(image)
-    return filtered
+    return np.array(filtered)
 
 
-def record_face(name, size, min_faces):
+def record_person(name, size, min_faces):
     imgs = aid.read_and_resize_data(PEOPLE_LOC + name, size)
     imgs = filter_images(imgs)
     record(imgs, name)
     return imgs
 
 
-def record_faces(min_faces=50):
+def record_data(min_faces=50):
     names = get_people_names()
     size = FACE_SIZE
     for name in names:
         if os.path.exists(RECORD_LOC + name + '.tfrecords') or len(aid.get_files(PEOPLE_LOC + name)[0]) < min_faces:
             continue
-        imgs = record_face(name, size, min_faces)
+        imgs = record_person(name, size, min_faces)
         if imgs is not None:
             print name, imgs.shape
 
 
-record_faces()
+record_data()
