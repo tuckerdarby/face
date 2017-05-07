@@ -68,17 +68,28 @@ def read_and_resize_data(directory, size):
     return images
 
 
-def extract_data(filename='cameron_brigh'):
+def extract_data(filename='cameron_brigh', num_samples=0, randomize=True):
     inbounds = []
     if not filename.endswith('.tfrecords'):
         filename += '.tfrecords'
     filename = RECORD_LOC + filename
     # print filename
     record_iterator = tf.python_io.tf_record_iterator(filename)
-    for string_record in record_iterator:
+    for i, string_record in enumerate(record_iterator):
         example = tf.train.Example()
         example.ParseFromString(string_record)
-        batch = int(example.features.feature['amount'].int64_list.value[0])
+        if i == 0:
+            batch = int(example.features.feature['amount'].int64_list.value[0])
+            if batch < num_samples:
+                return False, _
+            elif num_samples == 0:
+                sample_idxs = range(batch)
+            elif randomize and num_samples > 1:
+                sample_idxs = np.random.permutation(range(batch))[:num_samples]
+            else:
+                sample_idxs = range(num_samples)
+        if i not in sample_idxs:
+            continue
         height = int(example.features.feature['height'].int64_list.value[0])
         width = int(example.features.feature['width'].int64_list.value[0])
         depth = int(example.features.feature['depth'].int64_list.value[0])
@@ -89,4 +100,4 @@ def extract_data(filename='cameron_brigh'):
         inbounds.append(remade)
 
     # print 'Decoded Shape', (batch, height, width, depth)
-    return np.array(inbounds)
+    return True, np.array(inbounds)

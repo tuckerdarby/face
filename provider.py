@@ -6,29 +6,25 @@ import processor
 from constants import *
 
 
-def sample_people(samples=0, num_people=0, process=True):
+def sample_people(num_faces=0, num_people=0, process=True):
     people_names = os.listdir(RECORD_LOC)
     if num_people <= 0:
         num_people = len(people_names)
 
     people_data = []
-    idxs = np.random.permutation(range(len(people_names)))[:num_people]
+    idxs = np.random.permutation(range(len(people_names)))
     # sample_names = np.random.choice(people_names, num_people)
-    sample_names = np.array(people_names)[idxs]
+    people_names = np.array(people_names)[idxs]
 
-    for i, name in enumerate(sample_names):
-        data = aid.extract_data(name)
+    for i, name in enumerate(people_names):
+        result, data = aid.extract_data(name, num_faces, randomize=True)
+        if not result:
+            continue
         if process:
             data = processor.whiten(data)
-        num_data = len(data)
-        if samples == 0:
-            num_samples = num_data
-        else:
-            num_samples = min(samples, num_data)
-        sample_indicies = np.random.choice(range(num_data), num_samples)
-
-        sample_data = data[sample_indicies]
-        people_data.append(sample_data)
+        people_data.append(data)
+        if len(people_data) == num_people:
+            break
 
     return people_data
 

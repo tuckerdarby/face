@@ -48,10 +48,11 @@ def face_trainer(model, learning_rate, image_shape, global_step, reuse=True):
     return points
 
 
-def face_train(model, run_name, max_iter=100, people=10, samples=30, batch_size=100,
+def face_train(model, run_name, max_iter=100, people=10, faces=30, batch_size=100,
                alpha=0.25, learning_rate=0.001, image_shape=None, dropout=0):
+
     if image_shape is None:
-        images = provider.sample_people(num_people=1, samples=1)
+        images = provider.sample_people(num_people=1, num_faces=1)
         image_shape = (None, images[0].shape[1], images[0].shape[2], images[0].shape[3])
 
     global_step = tf.Variable(0, name='global_step', trainable=False)
@@ -79,7 +80,7 @@ def face_train(model, run_name, max_iter=100, people=10, samples=30, batch_size=
                 restorer.restore(sess, checkpoint.model_checkpoint_path)
 
         for iteration in range(max_iter):
-            images = provider.sample_people(num_people=people, samples=samples, process=False)
+            images = provider.sample_people(num_people=people, num_faces=faces, process=True)
             embeddings = []
             for i in range(len(images)):
                 feed_dict = {inbound: images[i]}
