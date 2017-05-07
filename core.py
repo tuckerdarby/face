@@ -2,7 +2,9 @@ import tensorflow as tf
 import numpy as np
 import os
 import provider
+from tensorflow.contrib import slim
 from constants import *
+
 
 
 def triplet_loss(anchor, positive, negative, alpha):
@@ -18,7 +20,20 @@ def triplet_loss(anchor, positive, negative, alpha):
 
 def embed(model, inputs, reuse, training=True, dropout=0.0):
     keep = 1 - dropout
-    embeddings, _ = model(inputs, reuse=reuse, training=training, keep_probability=keep)
+    logits, _ = model(inputs, reuse=reuse, training=training, keep_probability=keep)
+    embeddings = slim.fully_connected(logits, 128, activation_fn=None,
+                                      weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
+                                      weights_regularizer=slim.l2_regularizer(0.01),
+                                      normalizer_fn=slim.batch_norm,
+                                      normalizer_params={
+                                          'decay': 0.995,
+                                          'epsilon': 0.001,
+                                          'updates_collections': None,
+                                          'variables_collections': [tf.GraphKeys.TRAINABLE_VARIABLES],
+                                          'is_training': training
+                                      },
+                                      scope='bottleneck',
+                                      reuse=reuse)
     embeddings = tf.nn.l2_normalize(embeddings, 1, 1e-10, name='embeddings')
     return embeddings
 
@@ -61,7 +76,7 @@ def face_train(model, run_name, max_iter=100, people=10, faces=30, batch_size=10
     reuse = os.path.exists(CHECKPOINT_LOC + run_name)
 
     inbound = tf.placeholder(tf.float32, image_shape)
-    logits = embed(model, inbound, reuse)
+    logits = embed(model, inbound, reuse, training=True)
 
     trainer = face_trainer(model, lr, image_shape, global_step)
 
@@ -113,7 +128,7 @@ def face_train(model, run_name, max_iter=100, people=10, faces=30, batch_size=10
 
 def face_eval(model, run_name, images, image_shape):
     inbound = tf.placeholder(tf.float32, image_shape)
-    logits = embed(model, inbound, reuse=True, training=True)
+    logits = embed(model, inbound, reuse=True, training=False)
     restorer = tf.train.Saver()
     embeddings = []
 

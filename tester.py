@@ -60,7 +60,7 @@ def ranked_differences(embeddings):
 def test_model(model, name, batch=100):
     accs = []
     for i in range(batch):
-        images = provider.sample_people(samples=10, num_people=10, process=True)
+        images = provider.sample_people(num_faces=10, num_people=10, process=True)
         image_shape = None, images[0].shape[1], images[0].shape[2], images[0].shape[3]
         embeddings = face_eval(model, name, images, image_shape)
         guesses, correct, acc = ranked_differences(embeddings)
