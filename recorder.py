@@ -19,14 +19,6 @@ def _bytes_feature(value):
     return tf.train.Feature(bytes_list=tf.train.BytesList(value=[value]))
 
 
-def whiten(img):
-    mean = np.mean(img)
-    std = np.std(img)
-    std_adj = np.maximum(std, 1.0/np.sqrt(img.size))
-    whitened = np.multiply(np.subtract(img, mean), 1/std_adj)
-    return whitened
-
-
 def open_image(location, size):
     image = Image.open(location)
     image.thumbnail(size)
@@ -89,15 +81,25 @@ def record(inbound, name):
     writer.close()
 
 
+def filter_images(images):
+    filtered = []
+    for image in images:
+        if image.std() < 10 or image.mean() > 240 or image.mean() < 15:
+            continue
+        filtered.append(image)
+    return filtered
+
+
 def record_face(name, size, min_faces):
     imgs = aid.read_and_resize_data(PEOPLE_LOC + name, size)
+    imgs = filter_images(imgs)
     record(imgs, name)
     return imgs
 
 
 def record_faces(min_faces=50):
     names = get_people_names()
-    size = (32, 32)
+    size = FACE_SIZE
     for name in names:
         if os.path.exists(RECORD_LOC + name + '.tfrecords') or len(aid.get_files(PEOPLE_LOC + name)[0]) < min_faces:
             continue

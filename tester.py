@@ -57,19 +57,22 @@ def ranked_differences(embeddings):
     return guesses, correct, acc
 
 
-def test_model(model, name):
+def test_model(model, name, batch=100):
+    accs = []
+    for i in range(batch):
+        images = provider.sample_people(samples=10, num_people=10, process=True)
+        image_shape = None, images[0].shape[1], images[0].shape[2], images[0].shape[3]
+        embeddings = face_eval(model, name, images, image_shape)
+        guesses, correct, acc = ranked_differences(embeddings)
+        accs.append(acc)
+        if i == batch - 1:
+            diffs = difference_map(embeddings)
+            print diffs
+            sns.heatmap(diffs)
+            sns.plt.show()
+        print correct, acc
 
-    images = provider.sample_people(samples=10, num_people=10, process=True)
-    image_shape = None, images[0].shape[1], images[0].shape[2], images[0].shape[3]
-    embeddings = face_eval(model, name, images, image_shape)
-
-    diffs = difference_map(embeddings)
-    guesses, correct, acc = ranked_differences(embeddings)
-
-    print diffs
-    sns.heatmap(diffs)
-    sns.plt.show()
-    print correct, acc
+    print 'mean accuracy:', np.array(accs).mean()
     # print_differences(embeddings)
 
 

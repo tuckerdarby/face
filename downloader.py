@@ -3,6 +3,7 @@ import numpy as np
 import os
 import urllib, urllib2
 import socket
+import recorder
 from PIL import Image
 from constants import *
 
@@ -75,7 +76,7 @@ def crop_face(filename, left, top, right, bottom):
         return cropped_arr, cropped_img
     except Exception:
         os.remove(filename)
-        print 'bad crop - deleting file'
+        print 'bad crop - deleting file', filename
 
 
 def get_image_array(image_location):
@@ -124,6 +125,7 @@ def download_faces():
             if k >= max_people:
                 break
 
+        recorder.record_face(name, FACE_SIZE, min_faces=50)
         if i >= 3000: break
 
 

@@ -79,7 +79,7 @@ def face_train(model, run_name, max_iter=100, people=10, samples=30, batch_size=
                 restorer.restore(sess, checkpoint.model_checkpoint_path)
 
         for iteration in range(max_iter):
-            images = provider.sample_people(num_people=people, samples=samples, process=True)
+            images = provider.sample_people(num_people=people, samples=samples, process=False)
             embeddings = []
             for i in range(len(images)):
                 feed_dict = {inbound: images[i]}
@@ -87,15 +87,12 @@ def face_train(model, run_name, max_iter=100, people=10, samples=30, batch_size=
                 embeddings.append(logits_)
 
             embeddings = np.array(embeddings)
-            triplet_idxs = provider.select_triplets(embeddings)
+            triplet_idxs = provider.select_triplets(embeddings, hard_mine=False)
             triplets = provider.build_batch(images, triplet_idxs)
+            triplets = provider.shuffle_batch(triplets)
 
-            if batch_size > 0:
-                triplets = triplets[:,:(batch_size*2)]
-                triplets = provider.shuffle_batch(triplets)
+            if len(triplets) > batch_size > 0:
                 triplets = triplets[:,:batch_size]
-            else:
-                triplets = provider.shuffle_batch(triplets)
 
             train_dict = {
                 trainer['anchors']: triplets[0],

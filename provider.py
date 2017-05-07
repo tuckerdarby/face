@@ -42,9 +42,10 @@ def negative_distances(embeddings, pos_class_idx, anchor_idx):
     return np.array(neg_distances)
 
 
-def select_triplets(embeddings):
+def select_triplets(embeddings, hard_mine=False):
     num_people = embeddings.shape[0]
     num_faces = embeddings.shape[1]
+    num_choices = num_faces * num_people
 
     triplets = []
     vals = []
@@ -63,7 +64,11 @@ def select_triplets(embeddings):
                 dists = neg_dists - post_dist
                 dists = dists.flatten()
 
-                furthest = np.argsort(dists)[0]
+                if hard_mine:
+                    furthest = np.argsort(dists)[0]
+                else:
+                    choice = np.random.randint(0, min(max(15, int(num_choices*0.1)), num_choices))
+                    furthest = np.argsort(dists)[choice]
                 dist = dists[furthest]
                 vals.append(dist)
                 neg_idx = furthest / num_faces
@@ -76,7 +81,7 @@ def select_triplets(embeddings):
     return triplets
 
 
-def build_batch(images, triplets, process=True):
+def build_batch(images, triplets):
     batch = [[], [], []]
     for triplet in triplets:
         for i, coord in enumerate(triplet):
@@ -84,8 +89,6 @@ def build_batch(images, triplets, process=True):
 
     for k in range(3):
         batch[k] = np.array(batch[k])
-        if process:
-            batch[k] = processor.whiten(batch[k])
 
     batch = np.array(batch)
     return batch
