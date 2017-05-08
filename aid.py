@@ -81,7 +81,7 @@ def extract_data(filename='cameron_brigh', num_samples=0, randomize=True):
         if i == 0:
             batch = int(example.features.feature['amount'].int64_list.value[0])
             if batch < num_samples:
-                return False, _
+                return False, None
             elif num_samples == 0:
                 sample_idxs = range(batch)
             elif randomize and num_samples > 1:
