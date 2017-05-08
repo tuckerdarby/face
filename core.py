@@ -144,4 +144,4 @@ def face_eval(model, run_name, images, image_shape):
             feed_dict = {inbound: images[i]}
             embeddings.append(sess.run(logits, feed_dict))
 
-    return embeddings
+    return np.array(embeddings)
