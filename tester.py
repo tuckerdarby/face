@@ -58,8 +58,11 @@ def ranked_differences(embeddings):
 
 
 def closest_embedding(embedding, arr):
-    distances = np.square(embedding - arr)
-    sort = distances.argsort()
+    distances = []
+    for a in arr:
+        distance = np.square(embedding - a).mean()
+        distances.append(distance)
+    sort = np.array(distances).argsort()
     return sort[0]
 
 
@@ -83,7 +86,7 @@ def compare_distances(embeddings):
     return correct, total, np.divide(correct * 1.0, total * 1.0)
 
 
-def test_model(model, name, batch=100):
+def test_model(model, name, batch=5):
     accs = []
     for i in range(batch):
         images = provider.sample_people(num_faces=10, num_people=10, process=True)
@@ -105,4 +108,4 @@ def test_model(model, name, batch=100):
     # print_differences(embeddings)
 
 
-test_model(squeezenet.inference, 'squeeze_05_06_r2')
+test_model(squeezenet.inference, 'squeeze_test2')
