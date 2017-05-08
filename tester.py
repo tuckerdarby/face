@@ -78,7 +78,7 @@ def compare_distances(embeddings):
                 arr = embeddings[:, i]
                 closest = closest_embedding(embedding, arr)
                 total += 1
-                if closest == p:
+                if closest[0] == p:
                     correct += 1
     return correct, total, np.divide(correct * 1.0, total * 1.0)
 
