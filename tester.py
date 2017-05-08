@@ -96,10 +96,13 @@ def test_model(model, name, batch=100):
             print diffs
             sns.heatmap(diffs)
             sns.plt.show()
-        print correct, acc
+        print 'difference check:', correct, acc
+
+        correct, total, avg = compare_distances(embeddings)
+        print 'comparison check:', correct, total, avg
 
     print 'mean accuracy:', np.array(accs).mean()
     # print_differences(embeddings)
 
 
-# test_model(squeezenet.inference, 'squeeze')
+test_model(squeezenet.inference, 'squeeze_05_06_r2')
