@@ -20,8 +20,8 @@ def triplet_loss(anchor, positive, negative, alpha):
 
 def embed(model, inputs, reuse, training=True, dropout=0.0):
     keep = 1 - dropout
-    logits, _ = model(inputs, reuse=reuse, training=training, keep_probability=keep)
-    embeddings = slim.fully_connected(logits, 128, activation_fn=None,
+    net, _ = model(inputs, reuse=reuse, training=training, keep_probability=keep)
+    embeddings = slim.fully_connected(net, 128, activation_fn=None,
                                       weights_initializer=tf.truncated_normal_initializer(stddev=0.1),
                                       weights_regularizer=slim.l2_regularizer(0.01),
                                       normalizer_fn=slim.batch_norm,
@@ -32,7 +32,7 @@ def embed(model, inputs, reuse, training=True, dropout=0.0):
                                           'variables_collections': [tf.GraphKeys.TRAINABLE_VARIABLES],
                                           'is_training': training
                                       },
-                                      scope='bottleneck',
+                                      scope='fc',
                                       reuse=reuse)
     embeddings = tf.nn.l2_normalize(embeddings, 1, 1e-10, name='embeddings')
     return embeddings
