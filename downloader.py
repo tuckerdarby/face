@@ -64,15 +64,29 @@ def crop_image(img, left, top, right, bottom):
 def crop_face(filename, left, top, right, bottom):
     try:
         img_arr = get_image_array(filename)
-        cropped_arr = crop_image(img_arr, left, top, right, bottom)
+        if img_arr == None:
+            return
+        try:
+            cropped_arr = crop_image(img_arr, left, top, right, bottom)
+        except Exception:
+            print 'unable to crop image:', filename
         std = cropped_arr.std()
         if std < 1:
             os.remove(filename)
             print 'blank image/face - deleting file'
             return
-        cropped_img = Image.fromarray(cropped_arr)
-        os.remove(filename)
-        cropped_img.save(filename)
+        try:
+            cropped_img = Image.fromarray(cropped_arr)
+        except Exception:
+            print 'unable to get image from array:', filename
+        try:
+            os.remove(filename)
+        except Exception:
+            print 'unable to remove old file:', filename
+        try:
+            cropped_img.save(filename)
+        except Exception:
+            print 'unable to save image:', filename
         return cropped_arr, cropped_img
     except Exception:
         os.remove(filename)
@@ -80,10 +94,14 @@ def crop_face(filename, left, top, right, bottom):
 
 
 def get_image_array(image_location):
-    img = Image.open(image_location)
-    img.load()
-    img_arr = np.asarray(img, dtype=np.uint8)
-    return img_arr
+    try:
+        img = Image.open(image_location)
+        img.load()
+        img_arr = np.asarray(img, dtype=np.uint8)
+        return img_arr
+    except Exception:
+        print 'unable to get image from location:', image_location
+        return None
 
 
 socket.setdefaulttimeout(5)
@@ -169,4 +187,4 @@ def download_faces():
         if i >= 3000: break
 
 
-# download_faces()
+download_faces()
