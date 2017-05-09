@@ -93,7 +93,6 @@ def test_model(model, name, batch=5):
         image_shape = None, images[0].shape[1], images[0].shape[2], images[0].shape[3]
         embeddings = face_eval(model, name, images, image_shape)
         guesses, correct, acc = ranked_differences(embeddings)
-        accs.append(acc)
         if i == batch - 1:
             diffs = difference_map(embeddings)
             print diffs
@@ -103,6 +102,7 @@ def test_model(model, name, batch=5):
 
         correct, total, avg = compare_distances(embeddings)
         print 'comparison check:', correct, total, avg
+        accs.append(avg)
 
     print 'mean accuracy:', np.array(accs).mean()
     # print_differences(embeddings)
