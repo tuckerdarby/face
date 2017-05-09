@@ -1,5 +1,5 @@
 _USERNAME = 'tuck'
-_DATA_LOC = '/home/' + _USERNAME + 'Datasets/vgg_face_dataset/'
+_DATA_LOC = '/home/' + _USERNAME + '/Datasets/vgg_face_dataset/'
 LINK_LOC = _DATA_LOC + 'files/'
 RECORD_LOC = _DATA_LOC + 'records/'
 TEST_RECORD_LOC = _DATA_LOC + 'test_records/'

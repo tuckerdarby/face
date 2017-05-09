@@ -98,15 +98,13 @@ def download_test_faces():
         name = str(fn[:len(fn)-5]).strip().lower()
         df = pd.read_csv(LINK_LOC + fn, header=None, delimiter="\s+")
 
-        print len(df)
-
-        print name
-
         if os.path.exists(PEOPLE_LOC + name):
             # fn_dir = PEOPLE_LOC + name + '/'
             continue
         else:
             fn_dir = TEST_PEOPLE_LOC + name + '/'
+
+        print name, len(df)
 
         if not os.path.isdir(fn_dir):
             os.makedirs(fn_dir)
