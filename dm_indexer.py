@@ -33,7 +33,7 @@ def index_dm(model, name, batch=50):
 def get_images(rows, ext='.jpg'):
     images = []
     for row in rows.iterrows():
-        identity = row['identity']
+        identity = row[1]['identity']
         filename = DM_PEOPLE_LOC + identity + '/faces/' + identity + ext
         img = Image.open(filename)
         img.load()
