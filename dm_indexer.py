@@ -38,9 +38,8 @@ def index_dm(model, run_name, batch=50):
             end = (i+1)*batch
             rows = df.ix[start:end]
             images = get_images(rows)
-            for k in range(len(images)):
-                feed_dict = {inbound: images}
-                embeddings.append(sess.run(logits, feed_dict))
+            feed_dict = {inbound: images}
+            embeddings.extend(sess.run(logits, feed_dict))
 
     emb_df = pd.DataFrame(embeddings)
     emb_df.to_csv(DM_DATA_LOC + 'cropped_embeddings.csv')
@@ -58,4 +57,4 @@ def get_images(rows, ext='.jpg'):
     return images
 
 
-index_dm(inference, 'squeeze_05_06_r2')
+index_dm(inference, 'squeeze_test2')
