@@ -2,8 +2,10 @@ from __future__ import division
 
 import pandas as pd
 import numpy as np
+from math import ceil
 from PIL import Image
 from core import face_eval
+from models.squeezenet import inference
 from constants import *
 
 
@@ -13,7 +15,7 @@ def index_dm(model, name, batch=50):
     df = df[df['cropped'] == 1]
     df.to_csv(DM_DATA_LOC + 'cropped_index.csv')
     amount = len(df)
-    batches = amount / batch
+    batches = ceil(amount / batch)
 
     for i in range(batches):
         start = i*batch
@@ -38,3 +40,6 @@ def get_images(rows, ext='.jpg'):
         img_arr = np.asarray(img, dtype=np.uint8)
         images.append(img_arr)
     return images
+
+
+index_dm(inference, 'squeeze_05_06_r2')
