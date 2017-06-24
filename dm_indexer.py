@@ -17,7 +17,7 @@ def index_dm(model, name, batch=50):
     amount = len(df)
     batches = ceil(amount / batch)
 
-    for i in range(batches):
+    for i in range(int(batches)):
         start = i*batch
         end = (i+1)*batch
         rows = df.ix[start:end]
